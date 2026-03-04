@@ -4,7 +4,8 @@ import 'package:http/http.dart' as http;
 class ApiService {
   // ⚠️ Android Emulator → 10.0.2.2
   // ⚠️ Téléphone physique → IP locale (ex: 192.168.1.10)
-  static const String baseUrl = "http://127.0.0.1:8000/api";
+  // static const String baseUrl = "http://127.0.0.1:8000/api";
+  static const String baseUrl = "https://agroconnect-backend-api.onrender.com/api";
 
   // ==========================
   // REGISTER
