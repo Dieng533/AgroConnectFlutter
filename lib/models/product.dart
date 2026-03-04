@@ -1,28 +1,24 @@
 class Product {
   final int id;
   final String name;
-
-  // ANCIEN (pour compatibilité)
   final double price;
-
-  // NOUVEAUX CHAMPS
-  final double priceKg;
-  final String category;
-  final String location;
-  final int quantity;
-  final String imageUrl;
+  final String? image;
 
   Product({
     required this.id,
     required this.name,
-    required this.price,       // ← IMPORTANT
-    required this.priceKg,
-    required this.category,
-    required this.location,
-    required this.quantity,
-    required this.imageUrl,
+    required this.price,
+    this.image,
   });
 
-  bool get isSoldOut => quantity <= 0;
-}
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'],
+      name: json['name'],
+      price: double.parse(json['price'].toString()),
+      image: json['image'],
+    );
+  }
 
+  get quantity => null;
+}

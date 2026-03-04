@@ -7,21 +7,30 @@ import '/widgets/dashboard_background.dart';
 import '../../core/widgets_buyer/dashboard_action_card.dart';
 
 class DashboardBuyer extends StatelessWidget {
+  final String token;
+
+  const DashboardBuyer({Key? key, required this.token}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tableau de bord Acheteur'),
         actions: [
+          // 🛒 PANIER
           IconButton(
             icon: const Icon(Icons.shopping_cart),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CartScreen()),
+                MaterialPageRoute(
+                  builder: (_) => CartScreen(token: token, cartItems: [],),
+                ),
               );
             },
           ),
+
+          // 🔓 LOGOUT
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -34,8 +43,7 @@ class DashboardBuyer extends StatelessWidget {
           ),
         ],
       ),
-      // dans le body j'appelle des widgets car ce projet est decomposer
-      //en petit morcer de code afin de pas saturer noublier pas de regarder core-widgets buyer ou widgets
+
       body: Stack(
         children: [
           const DashboardBackground(),
@@ -45,6 +53,7 @@ class DashboardBuyer extends StatelessWidget {
               children: [
                 const SizedBox(height: 40),
 
+                // 🛍 VOIR PRODUITS
                 DashboardActionCard(
                   icon: Icons.shopping_basket,
                   title: 'Acheter des produits',
@@ -55,25 +64,27 @@ class DashboardBuyer extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => ProductListScreen()),
+                       builder: (_) => ProductListScreen(token: token),
+                      ),
                     );
                   },
                 ),
 
                 const SizedBox(height: 20),
 
+                // 👨‍🌾 VOIR FARMERS
                 DashboardActionCard(
                   icon: Icons.agriculture,
                   title: 'Trouver des agriculteurs',
                   subtitle:
-                      'Découvrez les agriculteurs,ONG, ou groupement, leurs champs et Activite de productions',
+                      'Découvrez les agriculteurs, ONG ou groupements',
                   buttonText: 'Voir les agriculteurs',
-                  //condition du bouton et navigation,
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const FarmerListScreen()),
+                        builder: (_) => FarmerListScreen(token: token),
+                      ),
                     );
                   },
                 ),
@@ -85,5 +96,3 @@ class DashboardBuyer extends StatelessWidget {
     );
   }
 }
-
-

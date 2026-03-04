@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../farmer/dashboard_farmer.dart';
 import '../buyer/dashboard_buyer.dart';
 import '../../widgets/custom_button.dart';
+import '../../core/services/api_service.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,22 +13,18 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // Utilisateurs simulés vue que j'ai pas de back-end
-  // j'ai du simuler un faux compte pour agricuter et les acheteur 
-  //veiller utiliser ces info pour tester
-  final List<Map<String, String>> users = [
-    {"email": "farmer@test.com", "password": "123456", "role": "FARMER"},
-    {"email": "buyer@test.com", "password": "123456", "role": "BUYER"},
-  ];
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
+
           // IMAGE DE FOND
           Container(
             decoration: const BoxDecoration(
@@ -38,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          // DÉGRADÉ VERT → ORANGE (avec correction de la dépréciation)
+          // DÉGRADÉ
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -67,12 +64,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+
                       const Icon(
                         Icons.agriculture,
                         size: 70,
                         color: Colors.green,
                       ),
+
                       const SizedBox(height: 10),
+
                       const Text(
                         'Connexion',
                         style: TextStyle(
@@ -80,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
                       const SizedBox(height: 20),
 
                       // EMAIL
@@ -95,6 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 15),
 
                       // PASSWORD
@@ -111,17 +113,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 25),
 
-                      // BOUTON SE CONNECTER
-                      CustomButton(
-                        label: 'Se connecter',
-                        onPressed: _login,
-                      ),
+                      // BOUTON
+                      isLoading
+                          ? const CircularProgressIndicator()
+                          : CustomButton(
+                              label: 'Se connecter',
+                              onPressed: _login,
+                            ),
 
                       const SizedBox(height: 15),
 
-                      // BOUTON INSCRIPTION
                       TextButton(
                         onPressed: () {
                           Navigator.push(
@@ -146,39 +150,63 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _login() {
-    String email = emailController.text.trim();
-    String password = passwordController.text.trim();
+  // ==========================
+  // LOGIN BACKEND
+  // ==========================
+  void _login() async {
+  String email = emailController.text.trim();
+  String password = passwordController.text.trim();
 
-    Map<String, String>? user;
+  if (email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Veuillez remplir tous les champs")),
+    );
+    return;
+  }
 
-    // Recherche de l'utilisateur
-    for (var u in users) {
-      if (u["email"] == email && u["password"] == password) {
-        user = u;
-        break;
+  setState(() => isLoading = true);
+
+  final response = await ApiService.login(email, password);
+
+  if (response.containsKey("access")) {
+    String token = response["access"];
+
+    final profile = await ApiService.getProfile(token);
+
+    if (profile.containsKey("error")) {
+      showError(profile["error"]);
+    } else {
+      String role = profile["role"].toString().toLowerCase(); // minuscule pour uniformité
+      print("ROLE CONNECTÉ : $role");
+
+      // Redirection selon rôle
+      if (role == "farmer" || role == "seller") {
+        // backend renvoie seller → on considère comme farmer
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => DashboardFarmer(token: token)),
+        );
+      } else if (role == "buyer") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => DashboardBuyer(token: token,)),
+        );
+      } else {
+        showError("Rôle inconnu : $role");
       }
     }
-
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email ou mot de passe incorrect')),
-      );
-      return;
-    }
-
-    // Navigation selon le rôle
-    if (user["role"] == "FARMER") {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardFarmer()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) =>  DashboardBuyer()),
-      );
-    }
+  } else if (response.containsKey("error")) {
+    showError(response["error"]);
+  } else {
+    showError("Email ou mot de passe incorrect");
   }
+
+  setState(() => isLoading = false);
 }
 
+  void showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+}
